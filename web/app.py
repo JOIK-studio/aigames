@@ -240,10 +240,11 @@ def _shutdown_session(session: dict):
     proc = session.get('proc')
     master_fd = session.get('master_fd')
 
-    try:
-        os.close(master_fd)
-    except (OSError, TypeError):
-        pass
+    if master_fd is not None:
+        try:
+            os.close(master_fd)
+        except OSError:
+            pass
 
     if proc is not None:
         try:
