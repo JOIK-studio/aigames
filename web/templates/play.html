@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ game.icon }} {{ game.name }} — aigames</title>
+
+  <!-- xterm.js CDN -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+
+  <!-- Socket.IO CDN -->
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #111;
+      --accent: #00ff88;
+      --accent2: #00d4ff;
+      --text: #e0e0e0;
+      --text-dim: #888;
+      --border: #2a2a4a;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Consolas', 'Courier New', monospace;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 16px;
+      background: #0a0a1a;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .back-btn:hover { background: rgba(0,255,136,0.1); }
+
+    .game-info { flex: 1; display: flex; align-items: center; gap: 10px; }
+    .game-icon { font-size: 1.4rem; }
+    .game-title { font-weight: bold; color: var(--accent2); font-size: 0.95rem; }
+    .game-short { color: var(--text-dim); font-size: 0.78rem; }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #444;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .status-dot.running { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .status-dot.ended   { background: #ff4444; }
+
+    .status-label { font-size: 0.7rem; color: var(--text-dim); }
+
+    /* ── Info bar (controls) ── */
+    .infobar {
+      background: #0f0f1e;
+      border-bottom: 1px solid var(--border);
+      padding: 6px 16px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+    .infobar strong { color: var(--accent); }
+
+    /* ── Terminal wrapper ── */
+    #terminal-wrapper {
+      flex: 1;
+      overflow: hidden;
+      padding: 8px;
+      background: #000;
+    }
+
+    #terminal {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* xterm overrides */
+    .xterm-viewport { overflow-y: auto !important; }
+
+    /* ── Overlay messages ── */
+    #overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #overlay.hidden { display: none; }
+
+    .overlay-box {
+      background: #141428;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 40px;
+      text-align: center;
+      max-width: 480px;
+    }
+
+    .overlay-box .big { font-size: 3rem; margin-bottom: 12px; }
+    .overlay-box h2 { color: var(--accent2); margin-bottom: 8px; }
+    .overlay-box p { color: var(--text-dim); font-size: 0.85rem; line-height: 1.6; }
+
+    .start-btn {
+      margin-top: 20px;
+      padding: 12px 32px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      color: #000;
+      font-weight: bold;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: opacity 0.2s;
+    }
+    .start-btn:hover { opacity: 0.85; }
+
+    .ended-box { border-color: #ff4444; }
+    .ended-box h2 { color: #ff4444; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .game-short { display: none; }
+      .infobar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top navigation bar -->
+<nav class="topbar">
+  <a href="/" class="back-btn">← Volver</a>
+  <div class="game-info">
+    <span class="game-icon">{{ game.icon }}</span>
+    <div>
+      <div class="game-title">{{ game.name }}</div>
+      <div class="game-short">{{ game.short }}</div>
+    </div>
+  </div>
+  <div id="status-dot" class="status-dot"></div>
+  <span id="status-label" class="status-label">Desconectado</span>
+</nav>
+
+<!-- Controls hint -->
+<div class="infobar">
+  <strong>Controles:</strong> {{ game.controls }}
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <strong>Dificultad:</strong> {{ game.difficulty }}
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <strong>Género:</strong> {{ game.genre }}
+</div>
+
+<!-- Terminal -->
+<div id="terminal-wrapper">
+  <div id="terminal"></div>
+</div>
+
+<!-- Start overlay -->
+<div id="overlay">
+  <div class="overlay-box">
+    <div class="big">{{ game.icon }}</div>
+    <h2>{{ game.name }}</h2>
+    <p>{{ game.description }}</p>
+    <button class="start-btn" id="start-btn">▶ INICIAR JUEGO</button>
+  </div>
+</div>
+
+<script>
+  const GAME_ID = {{ game.id }};
+
+  // ── xterm setup ──────────────────────────────────────────────
+  const term = new Terminal({
+    cursorBlink: true,
+    fontSize: 14,
+    fontFamily: "'Consolas', 'Courier New', monospace",
+    theme: {
+      background: '#000000',
+      foreground: '#e0e0e0',
+      cursor: '#00ff88',
+      cursorAccent: '#000',
+      selectionBackground: 'rgba(0,255,136,0.25)',
+      black:   '#1a1a1a', brightBlack:   '#555',
+      red:     '#ff4444', brightRed:     '#ff6666',
+      green:   '#00ff88', brightGreen:   '#44ffaa',
+      yellow:  '#ffd700', brightYellow:  '#ffe44d',
+      blue:    '#4499ff', brightBlue:    '#66bbff',
+      magenta: '#ff66ff', brightMagenta: '#ff99ff',
+      cyan:    '#00d4ff', brightCyan:    '#44eeff',
+      white:   '#dddddd', brightWhite:   '#ffffff',
+    },
+    scrollback: 2000,
+    convertEol: true,
+  });
+
+  const fitAddon = new FitAddon.FitAddon();
+  term.loadAddon(fitAddon);
+  term.open(document.getElementById('terminal'));
+
+  function fitTerminal() {
+    fitAddon.fit();
+    if (socket && socket.connected) {
+      socket.emit('resize', { cols: term.cols, rows: term.rows });
+    }
+  }
+
+  window.addEventListener('resize', fitTerminal);
+
+  // ── Socket.IO ────────────────────────────────────────────────
+  const socket = io({ transports: ['websocket', 'polling'] });
+
+  const dot   = document.getElementById('status-dot');
+  const label = document.getElementById('status-label');
+
+  function setStatus(state) {
+    dot.className = 'status-dot ' + state;
+    const labels = { running: 'Ejecutando', ended: 'Terminado', '': 'Desconectado' };
+    label.textContent = labels[state] || 'Desconectado';
+  }
+
+  socket.on('connect', () => {
+    setStatus('');
+  });
+
+  socket.on('output', (data) => {
+    term.write(data.data);
+  });
+
+  socket.on('game_ended', () => {
+    setStatus('ended');
+    term.write('\r\n\r\n\x1b[33m[El juego ha terminado. Haz clic en "Volver" para elegir otro.]\x1b[0m\r\n');
+    showEndedOverlay();
+  });
+
+  socket.on('error', (data) => {
+    term.write('\r\n\x1b[31mError: ' + data.msg + '\x1b[0m\r\n');
+  });
+
+  // ── Input forwarding ─────────────────────────────────────────
+  term.onData((data) => {
+    socket.emit('input', { data });
+  });
+
+  // ── Start game ───────────────────────────────────────────────
+  function startGame() {
+    document.getElementById('overlay').classList.add('hidden');
+    fitTerminal();
+    term.focus();
+    setStatus('running');
+    socket.emit('start_game', { game_id: GAME_ID });
+  }
+
+  document.getElementById('start-btn').addEventListener('click', startGame);
+
+  // ── Ended overlay ─────────────────────────────────────────────
+  function showEndedOverlay() {
+    const overlay = document.getElementById('overlay');
+    overlay.innerHTML = `
+      <div class="overlay-box ended-box">
+        <div class="big">🏁</div>
+        <h2>Partida terminada</h2>
+        <p>El juego ha finalizado. Puedes volver al menú para jugar otra vez o elegir otro juego.</p>
+        <div style="display:flex;gap:12px;justify-content:center;margin-top:20px">
+          <button class="start-btn" onclick="location.reload()">↺ Jugar de nuevo</button>
+          <a href="/" style="display:inline-block;padding:12px 32px;border:1px solid #888;color:#aaa;border-radius:8px;text-decoration:none;font-size:0.9rem;">← Menú</a>
+        </div>
+      </div>`;
+    overlay.classList.remove('hidden');
+  }
+</script>
+</body>
+</html>
