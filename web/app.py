@@ -188,7 +188,7 @@ GAMES_BY_ID = {g["id"]: g for g in GAMES}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(32))
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, async_mode='threading')
 
 # ---------------------------------------------------------------------------
 # Routes
@@ -287,7 +287,7 @@ def _read_pty(sid: str, master_fd: int):
                 session = None
         if session:
             _shutdown_session(session)
-        socketio.emit('game_ended', {}, to=sid)
+            socketio.emit('game_ended', {}, to=sid)
 
 
 @socketio.on('start_game')
@@ -298,12 +298,12 @@ def on_start_game(data):
     try:
         game_id = int((data or {}).get('game_id', 0))
     except (TypeError, ValueError):
-        emit('error', {'msg': 'ID de juego no válido'})
+        emit('server_error', {'msg': 'ID de juego no válido'})
         return
 
     game = GAMES_BY_ID.get(game_id)
     if not game:
-        emit('error', {'msg': 'Juego no encontrado'})
+        emit('server_error', {'msg': 'Juego no encontrado'})
         return
 
     # Close any existing session for this sid
@@ -311,7 +311,7 @@ def on_start_game(data):
 
     script = os.path.join(GAMES_DIR, game['file'])
     if not os.path.isfile(script):
-        emit('error', {'msg': 'Archivo de juego no encontrado'})
+        emit('server_error', {'msg': 'Archivo de juego no encontrado'})
         return
 
     # Spawn the game inside a PTY using subprocess (safe in threaded environments)
@@ -328,15 +328,14 @@ def on_start_game(data):
     except Exception as exc:
         os.close(master_fd)
         os.close(slave_fd)
-        emit('error', {'msg': f'No se pudo iniciar el juego: {exc}'})
+        emit('server_error', {'msg': f'No se pudo iniciar el juego: {exc}'})
         return
     finally:
         os.close(slave_fd)
 
     thread = threading.Thread(target=_read_pty, args=(sid, master_fd), daemon=True)
-    thread.start()
-
     _store_session(sid, {'master_fd': master_fd, 'proc': proc, 'thread': thread})
+    thread.start()
 
 
 @socketio.on('input')
@@ -387,6 +386,7 @@ def _cleanup_session(sid: str):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    host = os.environ.get('HOST', '127.0.0.1')
     print(f"🎮 aigames web server corriendo en http://localhost:{port}")
     print("   Presiona Ctrl+C para detener.")
-    socketio.run(app, host='0.0.0.0', port=port, debug=False)
+    socketio.run(app, host=host, port=port, debug=False)

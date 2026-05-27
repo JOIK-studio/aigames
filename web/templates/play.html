@@ -256,7 +256,7 @@
     showEndedOverlay();
   });
 
-  socket.on('error', (data) => {
+  socket.on('server_error', (data) => {
     term.write('\r\n\x1b[31mError: ' + data.msg + '\x1b[0m\r\n');
   });
 

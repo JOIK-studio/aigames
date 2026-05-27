@@ -301,14 +301,48 @@
     const results = document.getElementById('results');
     const randomButton = document.getElementById('random-button');
 
+    function showCopyStatus(message, timeout = 1800) {
+      randomButton.textContent = message;
+      window.setTimeout(() => {
+        randomButton.textContent = '🎲 Juego aleatorio';
+      }, timeout);
+    }
+
+    function fallbackCopyText(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return copied;
+    }
+
     function copyCommand(id) {
       const command = `python3 "1st Generation/generated-${id}.py"`;
-      navigator.clipboard.writeText(command).then(() => {
-        randomButton.textContent = `✅ Copiado: ${command}`;
-        window.setTimeout(() => {
-          randomButton.textContent = '🎲 Juego aleatorio';
-        }, 1800);
-      });
+      const hasClipboardApi = navigator.clipboard && typeof navigator.clipboard.writeText === 'function';
+      if (hasClipboardApi) {
+        navigator.clipboard.writeText(command)
+          .then(() => {
+            showCopyStatus(`✅ Copiado: ${command}`);
+          })
+          .catch(() => {
+            if (fallbackCopyText(command)) {
+              showCopyStatus(`✅ Copiado: ${command}`);
+              return;
+            }
+            showCopyStatus('⚠️ No se pudo copiar automáticamente');
+          });
+        return;
+      }
+      if (fallbackCopyText(command)) {
+        showCopyStatus(`✅ Copiado: ${command}`);
+        return;
+      }
+      showCopyStatus('⚠️ No se pudo copiar automáticamente');
     }
 
     function renderGames(items) {

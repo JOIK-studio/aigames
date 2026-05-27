@@ -27,6 +27,7 @@ Abre `http://localhost:5000` en tu navegador y elige un juego.
 | Variable | Descripción | Default |
 |----------|-------------|---------|
 | `PORT`   | Puerto del servidor | `5000` |
+| `HOST`   | Host de escucha del servidor | `127.0.0.1` |
 | `SECRET_KEY` | Clave de sesión de Flask | aleatoria por arranque |
 
 Ejemplo con puerto personalizado:
