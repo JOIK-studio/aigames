@@ -75,6 +75,43 @@
       padding: 40px 20px;
     }
 
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(0, 1fr)) auto;
+      gap: 12px;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+
+    .toolbar input,
+    .toolbar select,
+    .toolbar button {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      padding: 10px 12px;
+    }
+
+    .toolbar button {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .toolbar-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      margin-bottom: 18px;
+      letter-spacing: 1px;
+    }
+
     .section-title {
       font-size: 1.1rem;
       color: var(--text-dim);
@@ -101,6 +138,10 @@
       flex-direction: column;
       gap: 12px;
       transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .card.hidden {
+      display: none;
     }
 
     .card:hover {
@@ -220,6 +261,8 @@
     @media (max-width: 480px) {
       .logo { font-size: 2rem; }
       .grid { grid-template-columns: 1fr; }
+      .toolbar { grid-template-columns: 1fr; }
+      .toolbar-meta { flex-direction: column; }
     }
   </style>
 </head>
@@ -233,10 +276,36 @@
 
 <main>
   <h2 class="section-title">1ª Generación — {{ games|length }} juegos</h2>
+  <section class="toolbar" aria-label="Filtros">
+    <input id="search" type="search" placeholder="Buscar por nombre, género o descripción" />
+    <select id="difficulty">
+      <option value="">Todas las dificultades</option>
+      <option value="Fácil">Fácil</option>
+      <option value="Media">Media</option>
+      <option value="Alta">Alta</option>
+    </select>
+    <select id="genre">
+      <option value="">Todos los géneros</option>
+      {% for genre in games | map(attribute='genre') | unique | sort %}
+      <option value="{{ genre }}">{{ genre }}</option>
+      {% endfor %}
+    </select>
+    <button id="random-play" type="button">🎲 Juego aleatorio</button>
+  </section>
+  <div class="toolbar-meta">
+    <span id="results-count">{{ games|length }} resultados</span>
+    <span>Filtra rápido y descubre un juego nuevo sin salir del navegador.</span>
+  </div>
   <div class="grid">
     {% for g in games %}
     {% set diff_class = 'easy' if g.difficulty == 'Fácil' else ('hard' if g.difficulty == 'Alta' else 'medium') %}
-    <article class="card">
+    <article
+      class="card"
+      data-name="{{ g.name|lower }}"
+      data-short="{{ g.short|lower }}"
+      data-description="{{ g.description|lower }}"
+      data-genre="{{ g.genre }}"
+      data-difficulty="{{ g.difficulty }}">
       <div class="card-header">
         <span class="card-icon">{{ g.icon }}</span>
         <div class="card-title-block">
@@ -265,6 +334,60 @@
   aigames &nbsp;·&nbsp; 1ª Generación &nbsp;·&nbsp; Código en
   <a href="https://github.com/JOIK-studios/aigames" style="color:var(--accent)">GitHub</a>
 </footer>
+
+<script>
+  const cards = Array.from(document.querySelectorAll('.card'));
+  const searchInput = document.getElementById('search');
+  const difficultySelect = document.getElementById('difficulty');
+  const genreSelect = document.getElementById('genre');
+  const randomButton = document.getElementById('random-play');
+  const resultsCount = document.getElementById('results-count');
+
+  function applyFilters() {
+    const query = searchInput.value.trim().toLowerCase();
+    const difficulty = difficultySelect.value;
+    const genre = genreSelect.value;
+
+    const visibleCards = cards.filter((card) => {
+      const haystack = [
+        card.dataset.name,
+        card.dataset.short,
+        card.dataset.description,
+        card.dataset.genre.toLowerCase(),
+      ].join(' ');
+      const matchesQuery = !query || haystack.includes(query);
+      const matchesDifficulty = !difficulty || card.dataset.difficulty === difficulty;
+      const matchesGenre = !genre || card.dataset.genre === genre;
+      const visible = matchesQuery && matchesDifficulty && matchesGenre;
+      card.classList.toggle('hidden', !visible);
+      return visible;
+    });
+
+    resultsCount.textContent = `${visibleCards.length} resultado${visibleCards.length === 1 ? '' : 's'}`;
+    randomButton.disabled = visibleCards.length === 0;
+  }
+
+  function playRandomVisibleGame() {
+    const visibleLinks = cards
+      .filter((card) => !card.classList.contains('hidden'))
+      .map((card) => card.querySelector('.play-btn'))
+      .filter(Boolean);
+
+    if (!visibleLinks.length) {
+      return;
+    }
+
+    const choice = visibleLinks[Math.floor(Math.random() * visibleLinks.length)];
+    window.location.href = choice.href;
+  }
+
+  [searchInput, difficultySelect, genreSelect].forEach((element) => {
+    element.addEventListener('input', applyFilters);
+    element.addEventListener('change', applyFilters);
+  });
+  randomButton.addEventListener('click', playRandomVisibleGame);
+  applyFilters();
+</script>
 
 </body>
 </html>

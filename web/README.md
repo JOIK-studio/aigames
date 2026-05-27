@@ -1,6 +1,6 @@
 # aigames — Servidor Web 🌐
 
-Permite jugar a todos los juegos de aigames directamente desde el navegador, sin descargar nada ni instalar Python.
+Permite jugar a los juegos de `aigames` directamente desde el navegador usando un servidor local.
 
 ## Requisitos
 
@@ -27,6 +27,7 @@ Abre `http://localhost:5000` en tu navegador y elige un juego.
 | Variable | Descripción | Default |
 |----------|-------------|---------|
 | `PORT`   | Puerto del servidor | `5000` |
+| `SECRET_KEY` | Clave de sesión de Flask | aleatoria por arranque |
 
 Ejemplo con puerto personalizado:
 
@@ -40,6 +41,20 @@ PORT=8080 python3 app.py
 2. **PTY:** Al iniciar un juego, el servidor crea una pseudo-terminal (`pty`) que ejecuta el script Python correspondiente.
 3. **Frontend:** [xterm.js](https://xtermjs.org/) renderiza la salida del juego como una terminal real en el navegador y reenvía las pulsaciones de teclas al proceso Python.
 4. Al cerrar la conexión, el proceso del juego se termina automáticamente.
+
+## Funciones añadidas
+
+- Filtro por texto, género y dificultad en la portada.
+- Botón de juego aleatorio para descubrir títulos rápido.
+- Endpoint `GET /api/games` con el catálogo completo en JSON.
+- Manejo de sesión más robusto para evitar procesos huérfanos al terminar una partida.
+
+## GitHub Pages
+
+El repositorio también publica un escaparate estático en `docs/` mediante GitHub Pages, pero:
+
+- **sí** sirve para presentar el catálogo y enlazar al código
+- **no** puede ejecutar la app Flask ni los juegos interactivos
 
 ## Estructura
 

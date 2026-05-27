@@ -17,8 +17,8 @@ import termios
 import threading
 import time
 
-from flask import Flask, render_template, abort
-from flask_socketio import SocketIO, emit, disconnect
+from flask import Flask, render_template, abort, jsonify
+from flask_socketio import SocketIO, emit
 
 # ---------------------------------------------------------------------------
 # Configuración
@@ -187,7 +187,7 @@ GAMES_BY_ID = {g["id"]: g for g in GAMES}
 # ---------------------------------------------------------------------------
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(32)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(32))
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # ---------------------------------------------------------------------------
@@ -197,6 +197,12 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 @app.route('/')
 def index():
     return render_template('index.html', games=GAMES)
+
+
+@app.route('/api/games')
+def games_api():
+    games = [{key: value for key, value in game.items() if key != 'file'} for game in GAMES]
+    return jsonify({"count": len(games), "games": games})
 
 
 @app.route('/play/<int:game_id>')
@@ -210,8 +216,50 @@ def play(game_id):
 # PTY management  (one process per Socket.IO session)
 # ---------------------------------------------------------------------------
 
-# Maps sid -> {"master_fd": int, "pid": int, "thread": Thread}
+# Maps sid -> {"master_fd": int, "proc": Popen, "thread": Thread}
 _sessions: dict = {}
+_sessions_lock = threading.Lock()
+
+
+def _get_session(sid: str):
+    with _sessions_lock:
+        return _sessions.get(sid)
+
+
+def _store_session(sid: str, session: dict):
+    with _sessions_lock:
+        _sessions[sid] = session
+
+
+def _pop_session(sid: str):
+    with _sessions_lock:
+        return _sessions.pop(sid, None)
+
+
+def _shutdown_session(session: dict):
+    proc = session.get('proc')
+    master_fd = session.get('master_fd')
+
+    try:
+        os.close(master_fd)
+    except (OSError, TypeError):
+        pass
+
+    if proc is not None:
+        try:
+            proc.terminate()
+        except OSError:
+            pass
+        deadline = time.monotonic() + 3.0
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                break
+            time.sleep(0.1)
+        if proc.poll() is None:
+            try:
+                proc.kill()
+            except OSError:
+                pass
 
 
 def _read_pty(sid: str, master_fd: int):
@@ -230,6 +278,14 @@ def _read_pty(sid: str, master_fd: int):
     except Exception:
         pass
     finally:
+        with _sessions_lock:
+            session = _sessions.get(sid)
+            if session and session.get('master_fd') == master_fd:
+                session = _sessions.pop(sid)
+            else:
+                session = None
+        if session:
+            _shutdown_session(session)
         socketio.emit('game_ended', {}, to=sid)
 
 
@@ -238,7 +294,12 @@ def on_start_game(data):
     from flask import request
     sid = request.sid
 
-    game_id = int(data.get('game_id', 0))
+    try:
+        game_id = int((data or {}).get('game_id', 0))
+    except (TypeError, ValueError):
+        emit('error', {'msg': 'ID de juego no válido'})
+        return
+
     game = GAMES_BY_ID.get(game_id)
     if not game:
         emit('error', {'msg': 'Juego no encontrado'})
@@ -274,17 +335,19 @@ def on_start_game(data):
     thread = threading.Thread(target=_read_pty, args=(sid, master_fd), daemon=True)
     thread.start()
 
-    _sessions[sid] = {'master_fd': master_fd, 'proc': proc, 'thread': thread}
+    _store_session(sid, {'master_fd': master_fd, 'proc': proc, 'thread': thread})
 
 
 @socketio.on('input')
 def on_input(data):
     from flask import request
     sid = request.sid
-    session = _sessions.get(sid)
+    session = _get_session(sid)
     if session:
         try:
-            text = data.get('data', '')
+            text = (data or {}).get('data', '')
+            if not isinstance(text, str) or not text:
+                return
             os.write(session['master_fd'], text.encode('utf-8'))
         except OSError:
             pass
@@ -294,11 +357,11 @@ def on_input(data):
 def on_resize(data):
     from flask import request
     sid = request.sid
-    session = _sessions.get(sid)
+    session = _get_session(sid)
     if session:
         try:
-            cols = int(data.get('cols', 80))
-            rows = int(data.get('rows', 24))
+            cols = max(20, min(int((data or {}).get('cols', 80)), 240))
+            rows = max(10, min(int((data or {}).get('rows', 24)), 80))
             winsize = struct.pack('HHHH', rows, cols, 0, 0)
             fcntl.ioctl(session['master_fd'], termios.TIOCSWINSZ, winsize)
         except Exception:
@@ -312,33 +375,9 @@ def on_disconnect():
 
 
 def _cleanup_session(sid: str):
-    session = _sessions.pop(sid, None)
+    session = _pop_session(sid)
     if session:
-        proc = session.get('proc')
-        master_fd = session.get('master_fd')
-
-        # Close the master PTY so the child receives EOF
-        try:
-            os.close(master_fd)
-        except OSError:
-            pass
-
-        if proc is not None:
-            # Graceful shutdown: SIGTERM first, then SIGKILL if needed
-            try:
-                proc.terminate()
-            except OSError:
-                pass
-            deadline = time.monotonic() + 3.0
-            while time.monotonic() < deadline:
-                if proc.poll() is not None:
-                    break
-                time.sleep(0.1)
-            if proc.poll() is None:
-                try:
-                    proc.kill()
-                except OSError:
-                    pass
+        _shutdown_session(session)
 
 
 # ---------------------------------------------------------------------------
