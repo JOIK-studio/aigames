@@ -195,7 +195,7 @@
 </div>
 
 <script>
-  const GAME_ID = {{ game.id }};
+  const GAME_ID = {{ game.id | tojson }};
 
   // ── xterm setup ──────────────────────────────────────────────
   const term = new Terminal({

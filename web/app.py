@@ -10,9 +10,12 @@ import os
 import sys
 import pty
 import select
-import signal
 import subprocess
+import struct
+import fcntl
+import termios
 import threading
+import time
 
 from flask import Flask, render_template, abort
 from flask_socketio import SocketIO, emit, disconnect
@@ -232,8 +235,6 @@ def _read_pty(sid: str, master_fd: int):
 
 @socketio.on('start_game')
 def on_start_game(data):
-    from flask_socketio import join_room
-    sid = data.get('sid') or ''
     from flask import request
     sid = request.sid
 
@@ -251,29 +252,29 @@ def on_start_game(data):
         emit('error', {'msg': 'Archivo de juego no encontrado'})
         return
 
-    # Spawn the game in a PTY
+    # Spawn the game inside a PTY using subprocess (safe in threaded environments)
     master_fd, slave_fd = pty.openpty()
-    pid = os.fork()
-    if pid == 0:
-        # Child process
-        os.setsid()
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, script],
+            stdin=slave_fd,
+            stdout=slave_fd,
+            stderr=slave_fd,
+            close_fds=True,
+            start_new_session=True,
+        )
+    except Exception as exc:
         os.close(master_fd)
-        # Redirect stdin/stdout/stderr to slave pty
-        os.dup2(slave_fd, 0)
-        os.dup2(slave_fd, 1)
-        os.dup2(slave_fd, 2)
-        if slave_fd > 2:
-            os.close(slave_fd)
-        os.execvp(sys.executable, [sys.executable, script])
-        os._exit(1)
-
-    # Parent process
-    os.close(slave_fd)
+        os.close(slave_fd)
+        emit('error', {'msg': f'No se pudo iniciar el juego: {exc}'})
+        return
+    finally:
+        os.close(slave_fd)
 
     thread = threading.Thread(target=_read_pty, args=(sid, master_fd), daemon=True)
     thread.start()
 
-    _sessions[sid] = {'master_fd': master_fd, 'pid': pid, 'thread': thread}
+    _sessions[sid] = {'master_fd': master_fd, 'proc': proc, 'thread': thread}
 
 
 @socketio.on('input')
@@ -292,9 +293,6 @@ def on_input(data):
 @socketio.on('resize')
 def on_resize(data):
     from flask import request
-    import fcntl
-    import termios
-    import struct
     sid = request.sid
     session = _sessions.get(sid)
     if session:
@@ -316,18 +314,31 @@ def on_disconnect():
 def _cleanup_session(sid: str):
     session = _sessions.pop(sid, None)
     if session:
+        proc = session.get('proc')
+        master_fd = session.get('master_fd')
+
+        # Close the master PTY so the child receives EOF
         try:
-            os.kill(session['pid'], signal.SIGTERM)
+            os.close(master_fd)
         except OSError:
             pass
-        try:
-            os.close(session['master_fd'])
-        except OSError:
-            pass
-        try:
-            os.waitpid(session['pid'], os.WNOHANG)
-        except ChildProcessError:
-            pass
+
+        if proc is not None:
+            # Graceful shutdown: SIGTERM first, then SIGKILL if needed
+            try:
+                proc.terminate()
+            except OSError:
+                pass
+            deadline = time.monotonic() + 3.0
+            while time.monotonic() < deadline:
+                if proc.poll() is not None:
+                    break
+                time.sleep(0.1)
+            if proc.poll() is None:
+                try:
+                    proc.kill()
+                except OSError:
+                    pass
 
 
 # ---------------------------------------------------------------------------
