@@ -48,6 +48,7 @@ PORT=8080 python3 app.py
 - Botón de juego aleatorio para descubrir títulos rápido.
 - Endpoint `GET /api/games` con el catálogo completo en JSON.
 - Manejo de sesión más robusto para evitar procesos huérfanos al terminar una partida.
+- Assets cliente servidos en local para reducir errores por CDNs bloqueados.
 
 ## GitHub Pages
 
