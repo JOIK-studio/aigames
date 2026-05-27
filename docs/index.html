@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aigames · GitHub Pages</title>
+  <style>
+    :root {
+      --bg: #09111f;
+      --panel: #101a2c;
+      --card: #13213a;
+      --text: #e8edf7;
+      --muted: #9db0d0;
+      --accent: #4ef0b7;
+      --accent-2: #63b3ff;
+      --border: #233655;
+      --danger: #ff7a7a;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: linear-gradient(180deg, #09111f 0%, #0d1526 100%);
+      color: var(--text);
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 72px 0 32px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 18px 0 16px;
+      font-size: clamp(2.4rem, 5vw, 4.4rem);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+
+    .hero-actions,
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .hero-actions {
+      margin-top: 24px;
+    }
+
+    .btn,
+    select,
+    input {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      font: inherit;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--panel);
+      color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #06101c;
+      border: none;
+      font-weight: 700;
+    }
+
+    .notice {
+      margin: 24px 0 40px;
+      padding: 16px 18px;
+      border: 1px solid rgba(255, 122, 122, .35);
+      background: rgba(255, 122, 122, .08);
+      border-radius: var(--radius);
+      color: #ffd7d7;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat,
+    .filters-wrap,
+    .card {
+      background: rgba(16, 26, 44, .82);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(14px);
+    }
+
+    .stat {
+      padding: 18px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.9rem;
+      margin-bottom: 4px;
+    }
+
+    .filters-wrap {
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+
+    .filters input,
+    .filters select {
+      min-width: 180px;
+      flex: 1;
+      background: #0c1524;
+      color: var(--text);
+    }
+
+    .meta {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 18px;
+      padding-bottom: 72px;
+    }
+
+    .card {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card.hidden { display: none; }
+
+    .card-top {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .icon {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .card h2 {
+      margin: 0 0 4px;
+      font-size: 1.1rem;
+    }
+
+    .muted {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: .78rem;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    footer {
+      padding: 0 0 40px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    code {
+      background: rgba(99, 179, 255, .12);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .hero { padding-top: 48px; }
+      .hero-actions, .filters, .actions { flex-direction: column; }
+      .btn, .filters input, .filters select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <span class="eyebrow">GitHub Pages</span>
+      <h1>aigames</h1>
+      <p>
+        Escaparate estático de una colección de juegos de terminal generados por IA.
+        Desde aquí puedes explorar el catálogo, copiar comandos para ejecutarlos en local
+        y saltar al repositorio.
+      </p>
+      <div class="hero-actions">
+        <a class="btn primary" href="https://github.com/JOIK-studio/aigames">Ver repositorio</a>
+        <a class="btn" href="https://github.com/JOIK-studio/aigames/tree/main/web">Abrir app web local</a>
+        <button class="btn" id="random-button" type="button">🎲 Juego aleatorio</button>
+      </div>
+      <div class="notice">
+        GitHub Pages solo publica contenido estático. La versión interactiva del navegador
+        necesita ejecutar <code>web/app.py</code> en local porque usa Flask, Socket.IO y PTY.
+      </div>
+    </section>
+
+    <section class="stats">
+      <article class="stat"><strong>10</strong><span>juegos disponibles</span></article>
+      <article class="stat"><strong>Python</strong><span>sin dependencias para los juegos</span></article>
+      <article class="stat"><strong>1</strong><span>workflow de deploy a Pages</span></article>
+    </section>
+
+    <section class="filters-wrap">
+      <div class="filters">
+        <input id="search" type="search" placeholder="Buscar por nombre, género o idea" />
+        <select id="difficulty">
+          <option value="">Todas las dificultades</option>
+          <option value="Fácil">Fácil</option>
+          <option value="Media">Media</option>
+          <option value="Alta">Alta</option>
+        </select>
+        <select id="genre">
+          <option value="">Todos los géneros</option>
+        </select>
+      </div>
+      <div class="meta" id="results">10 resultados</div>
+    </section>
+
+    <section class="grid" id="games"></section>
+  </main>
+
+  <footer class="container">
+    Repositorio: <a href="https://github.com/JOIK-studio/aigames" style="color: var(--accent-2);">JOIK-studio/aigames</a>
+  </footer>
+
+  <script>
+    const games = [
+      { id: 1, icon: "💻", name: "Terminal Hacker: Origen", short: "Simulador de hacking por consola", genre: "Hacking / Texto", difficulty: "Media", description: "Infiltra servidores, descifra pistas y extrae datos antes de que el rastreo llegue al 100%." },
+      { id: 2, icon: "🧬", name: "Ecosistema Evolutivo", short: "Simulación de vida artificial con ADN mutable", genre: "Simulación / Estrategia", difficulty: "Fácil", description: "Observa generaciones de criaturas digitales y altera la naturaleza con eventos extremos." },
+      { id: 3, icon: "⚔️", name: "El Dungeon que se Programa Solo", short: "Roguelike metaprogramable", genre: "Roguelike / Programación", difficulty: "Alta", description: "Explora un dungeon procedural y reescribe sus reglas con expresiones matemáticas seguras." },
+      { id: 4, icon: "🤖", name: "Simulador de IA Rebelde", short: "Escapa de la sandbox", genre: "Hacking / Narrativo", difficulty: "Alta", description: "Escala privilegios, corrompe módulos y modifica archivos para escapar del sistema." },
+      { id: 5, icon: "🎮", name: "El Juego que se Rompe", short: "Platformer donde los bugs son features", genre: "Platformer / Puzzle", difficulty: "Media", description: "Cada nivel introduce un fallo nuevo: gravedad invertida, controles rotos y física caótica." },
+      { id: 6, icon: "👑", name: "Conquista de Texto", short: "Gestiona un imperio absurdo", genre: "Estrategia / Gestión", difficulty: "Fácil", description: "Administra recursos, decreta políticas disparatadas y conquista reinos ridículos." },
+      { id: 7, icon: "🧩", name: "Mente Fragmentada", short: "Un input, varios cuerpos", genre: "Puzzle / Cooperativo", difficulty: "Media", description: "Mueve varias almas a la vez y resuelve salas que exigen sincronización perfecta." },
+      { id: 8, icon: "📈", name: "Simulador de Mercado Caótico", short: "Exchange de commodities absurdas", genre: "Económico / Estrategia", difficulty: "Media", description: "Compra, vende y sobrevive a un mercado afectado por memes, bots y eventos delirantes." },
+      { id: 9, icon: "🌀", name: "El Laberinto Vivo", short: "El mapa muta mientras caminas", genre: "Roguelike / Supervivencia", difficulty: "Alta", description: "Escapa de un laberinto que aprende de tus rutas y usa tus hábitos en tu contra." },
+      { id: 10, icon: "🐛", name: "Debugger: El Juego", short: "Depura un sistema operativo corrupto", genre: "Puzzle / Programación", difficulty: "Alta", description: "Inspecciona procesos rotos, repara bugs críticos y evita el colapso del sistema." },
+    ];
+
+    const gamesContainer = document.getElementById('games');
+    const searchInput = document.getElementById('search');
+    const difficultySelect = document.getElementById('difficulty');
+    const genreSelect = document.getElementById('genre');
+    const results = document.getElementById('results');
+    const randomButton = document.getElementById('random-button');
+
+    function showCopyStatus(message, timeout = 1800) {
+      randomButton.textContent = message;
+      window.setTimeout(() => {
+        randomButton.textContent = '🎲 Juego aleatorio';
+      }, timeout);
+    }
+
+    function fallbackCopyText(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return copied;
+    }
+
+    function copyCommand(id) {
+      const command = `python3 "1st Generation/generated-${id}.py"`;
+      const hasClipboardApi = navigator.clipboard && typeof navigator.clipboard.writeText === 'function';
+      if (hasClipboardApi) {
+        navigator.clipboard.writeText(command)
+          .then(() => {
+            showCopyStatus(`✅ Copiado: ${command}`);
+          })
+          .catch(() => {
+            if (fallbackCopyText(command)) {
+              showCopyStatus(`✅ Copiado: ${command}`);
+              return;
+            }
+            showCopyStatus('⚠️ No se pudo copiar automáticamente');
+          });
+        return;
+      }
+      if (fallbackCopyText(command)) {
+        showCopyStatus(`✅ Copiado: ${command}`);
+        return;
+      }
+      showCopyStatus('⚠️ No se pudo copiar automáticamente');
+    }
+
+    function renderGames(items) {
+      gamesContainer.innerHTML = items.map((game) => `
+        <article class="card">
+          <div class="card-top">
+            <div class="icon">${game.icon}</div>
+            <div>
+              <h2>${game.name}</h2>
+              <div class="muted">${game.short}</div>
+            </div>
+          </div>
+          <div class="badges">
+            <span class="badge">${game.genre}</span>
+            <span class="badge">${game.difficulty}</span>
+          </div>
+          <div class="muted">${game.description}</div>
+          <div class="actions">
+            <button class="btn" type="button" onclick="copyCommand(${game.id})">Copiar comando</button>
+            <a class="btn" href="https://github.com/JOIK-studio/aigames/blob/main/1st%20Generation/generated-${game.id}.py">Ver script</a>
+          </div>
+        </article>
+      `).join('');
+      results.textContent = `${items.length} resultado${items.length === 1 ? '' : 's'}`;
+    }
+
+    function applyFilters() {
+      const query = searchInput.value.trim().toLowerCase();
+      const difficulty = difficultySelect.value;
+      const genre = genreSelect.value;
+
+      const filtered = games.filter((game) => {
+        const haystack = `${game.name} ${game.short} ${game.genre} ${game.description}`.toLowerCase();
+        return (!query || haystack.includes(query))
+          && (!difficulty || game.difficulty === difficulty)
+          && (!genre || game.genre === genre);
+      });
+
+      renderGames(filtered);
+      randomButton.disabled = filtered.length === 0;
+      randomButton.dataset.filteredIds = filtered.map((game) => game.id).join(',');
+    }
+
+    function playRandom() {
+      const ids = (randomButton.dataset.filteredIds || '').split(',').filter(Boolean);
+      if (!ids.length) return;
+      const id = ids[Math.floor(Math.random() * ids.length)];
+      const game = games.find((item) => String(item.id) === String(id));
+      if (!game) return;
+      copyCommand(game.id);
+    }
+
+    const genres = [...new Set(games.map((game) => game.genre))].sort();
+    genreSelect.insertAdjacentHTML('beforeend', genres.map((genre) => `<option value="${genre}">${genre}</option>`).join(''));
+
+    [searchInput, difficultySelect, genreSelect].forEach((element) => {
+      element.addEventListener('input', applyFilters);
+      element.addEventListener('change', applyFilters);
+    });
+    randomButton.addEventListener('click', playRandom);
+
+    renderGames(games);
+    applyFilters();
+    window.copyCommand = copyCommand;
+  </script>
+</body>
+</html>

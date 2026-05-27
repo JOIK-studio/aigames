@@ -291,7 +291,10 @@ class Game:
     ╚═══════════════════════════════════════════════════════════════╝
         """)
         print(f"{C.END}")
-        name = input(f"{C.YELLOW}Nombre de tu imperio: {C.END}").strip()
+        try:
+            name = input(f"{C.YELLOW}Nombre de tu imperio: {C.END}").strip()
+        except (EOFError, KeyboardInterrupt):
+            name = ""
         if not name:
             name = "Imperio de lo Inesperado"
         self.empire = Empire(name)
@@ -305,7 +308,10 @@ class Game:
         for i, (desc, effects) in enumerate(event['choices'], 1):
             print(f"  {C.CYAN}{i}.{C.END} {desc}")
         
-        choice = input(f"\n{C.BOLD}Tu decreto (1-{len(event['choices'])}): {C.END}").strip()
+        try:
+            choice = input(f"\n{C.BOLD}Tu decreto (1-{len(event['choices'])}): {C.END}").strip()
+        except (EOFError, KeyboardInterrupt):
+            choice = ""
         try:
             idx = int(choice) - 1
             if 0 <= idx < len(event['choices']):
@@ -333,7 +339,10 @@ class Game:
             print(f"  {C.CYAN}{i}.{C.END} {name} ({cost})")
         print(f"  {C.CYAN}0.{C.END} Ninguna (ahorrar recursos)")
         
-        choice = input(f"\n{C.BOLD}Política (0-4): {C.END}").strip()
+        try:
+            choice = input(f"\n{C.BOLD}Política (0-4): {C.END}").strip()
+        except (EOFError, KeyboardInterrupt):
+            choice = ""
         try:
             idx = int(choice) - 1
             if idx == -1:
@@ -361,7 +370,10 @@ class Game:
             print(f"      {C.DIM}{t['flavor']}{C.END}")
         print(f"  {C.CYAN}0.{C.END} No conquistar este turno")
         
-        choice = input(f"\n{C.BOLD}Objetivo (0-{min(5, len(available))}): {C.END}").strip()
+        try:
+            choice = input(f"\n{C.BOLD}Objetivo (0-{min(5, len(available))}): {C.END}").strip()
+        except (EOFError, KeyboardInterrupt):
+            choice = ""
         try:
             idx = int(choice) - 1
             if idx == -1:
@@ -500,8 +512,14 @@ class Game:
                 self.victory(vic)
             
             print(f"\n{C.DIM}Fin del turno {self.empire.turn - 1}. Presiona Enter...{C.END}")
-            input()
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                break
 
 if __name__ == "__main__":
-    game = Game()
-    game.run()
+    try:
+        game = Game()
+        game.run()
+    except (EOFError, KeyboardInterrupt):
+        print(f"\n{C.DIM}El imperio se disuelve en el olvido...{C.END}")

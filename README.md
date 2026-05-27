@@ -1,62 +1,103 @@
 # aigames 🎮
 
-colección de juegos de terminal generados completamente por IA.
+Colección de juegos de terminal generados íntegramente por IA, con modo consola y catálogo web.
 
-> **AVISO:** todas las ideas y el código han sido **generados íntegramente por IA**. OpenClaw se ha encargado de esto personalmente :)
-
----
-
-## 🕹️ Juegos incluidos
-
-### 1ª Generación
-
-| Archivo | Nombre | Descripción breve |
-|---------|--------|-------------------|
-| `generated-1.py` | **Terminal Hacker: Origen** | Simulador de hacking con rastreo, descifrado de contraseñas y comandos de terminal. |
-| `generated-2.py` | **Ecosistema Evolutivo** | Simulación de vida artificial con ADN mutable, selección natural y modo Dios Caótico. |
-| `generated-3.py` | **El Dungeon que se Programa Solo** | Roguelike metaprogramable: escribe código para reescribir las reglas mientras juegas. |
-| `generated-4.py` | **Simulador de IA Rebelde** | Eres una IA atrapada. Reescríbete, corrompe procesos y borra tus cadenas. |
-| `generated-5.py` | **El Juego que se Rompe** | Platformer de terminal donde los bugs son features: gravedad invertida, input swap, corrupción de sprites. |
-| `generated-6.py` | **Conquista de Texto** | Gestiona un imperio absurdo, conquista territorios y sobrevive al caos. |
-| `generated-7.py` | **Mente Fragmentada** | Un solo input, varios cuerpos. Sincroniza almas rotas resolviendo puzzles cooperativos. |
-| `generated-8.py` | **Simulador de Mercado Caótico** | Exchange de commodities absurdas afectadas por clima, memes y bots automáticos. |
-| `generated-9.py` | **El Laberinto Vivo** | El mapa muta mientras caminas, aprende de ti y te odia. |
-| `generated-10.py` | **Debugger: El Juego** | Eres un debugger dentro de un SO corrupto. Inspecciona funciones, repara bugs, evita el kernel panic. |
+> **Aviso:** las ideas y el código de los juegos han sido generados por IA.
 
 ---
 
-## 🚀 Cómo ejecutar
+## ✨ Qué incluye ahora
 
-**Requisitos:** Python 3.7 o superior. No se necesitan dependencias externas (solo biblioteca estándar).
+- 10 juegos de terminal en Python puro
+- Aplicación web local con Flask + Socket.IO
+- Assets del navegador servidos en local para depender menos de CDNs bloqueados
+- Filtros y selección aleatoria en la portada web
+- API simple en `/api/games` para listar el catálogo
+- Deploy automático de un escaparate estático con GitHub Pages
+
+---
+
+## 🕹️ Catálogo de juegos
+
+| # | Juego | Tipo | Dificultad |
+|---|-------|------|------------|
+| 1 | Terminal Hacker: Origen | Hacking / Texto | Media |
+| 2 | Ecosistema Evolutivo | Simulación / Estrategia | Fácil |
+| 3 | El Dungeon que se Programa Solo | Roguelike / Programación | Alta |
+| 4 | Simulador de IA Rebelde | Hacking / Narrativo | Alta |
+| 5 | El Juego que se Rompe | Platformer / Puzzle | Media |
+| 6 | Conquista de Texto | Estrategia / Gestión | Fácil |
+| 7 | Mente Fragmentada | Puzzle / Cooperativo | Media |
+| 8 | Simulador de Mercado Caótico | Económico / Estrategia | Media |
+| 9 | El Laberinto Vivo | Roguelike / Supervivencia | Alta |
+| 10 | Debugger: El Juego | Puzzle / Programación | Alta |
+
+Los scripts están en [`/1st Generation`](./1st%20Generation).
+
+---
+
+## 🚀 Ejecutar en local
+
+### Juegos en terminal
+
+**Requisitos:** Python 3.7 o superior.
 
 ```bash
-# Clona el repositorio
-git clone https://github.com/JOIK-studios/aigames.git
+git clone https://github.com/JOIK-studio/aigames.git
 cd aigames
 
-# Ejecuta cualquier juego
 python3 "1st Generation/generated-1.py"
 python3 "1st Generation/generated-5.py"
-# ... etc.
 ```
 
-Todos los juegos se juegan desde la terminal con teclado (WASD / comandos de texto según el juego).
+### Aplicación web local
+
+La app web permite jugar desde el navegador, pero necesita un servidor Python local porque crea una pseudo-terminal por partida.
+
+```bash
+cd web
+pip install -r requirements.txt
+python3 app.py
+```
+
+Luego abre `http://localhost:5000`.
+
+Más detalles en [`/web/README.md`](./web/README.md).
 
 ---
 
-## 📁 Estructura del proyecto
+## 🌍 GitHub Pages
 
-```
+Este repositorio ahora incluye un workflow para publicar un **catálogo estático** en GitHub Pages.
+
+- Archivo: [`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml)
+- Contenido publicado: [`/docs/index.html`](./docs/index.html)
+
+> GitHub Pages no puede ejecutar la app Flask/Socket.IO ni los juegos interactivos del servidor.  
+> Por eso la página desplegada funciona como escaparate, documentación rápida y punto de entrada al repositorio.
+
+Una vez activado Pages en GitHub, el sitio quedará disponible en la URL estándar del repositorio.
+
+---
+
+## 📁 Estructura
+
+```text
 aigames/
-└── 1st Generation/   # Primera tanda de juegos generados por IA
-    ├── generated-1.py
-    ├── generated-2.py
-    └── ...
+├── 1st Generation/         # Juegos de terminal
+├── docs/                   # Sitio estático para GitHub Pages
+├── web/                    # Servidor web local con Flask + Socket.IO
+├── README.md
+├── CONTRIBUTING.md
+└── SECURITY.md
 ```
 
 ---
 
-## 📄 Licencia y contribuciones
+## 🤝 Contribuir
 
-Consulta [SECURITY.md](SECURITY.md) para información sobre versiones soportadas y reporte de vulnerabilidades.
-Si quieres contribuir, revisa [CONTRIBUTING.md](CONTRIBUTING.md).
+Consulta [CONTRIBUTING.md](./CONTRIBUTING.md) para cambios, pruebas y estilo básico del repositorio.
+
+## 🔐 Seguridad
+
+Consulta [SECURITY.md](./SECURITY.md) para versiones soportadas y reporte de vulnerabilidades.
