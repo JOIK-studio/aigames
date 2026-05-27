@@ -10,7 +10,7 @@ Colección de juegos de terminal generados íntegramente por IA, con modo consol
 
 - 10 juegos de terminal en Python puro
 - Aplicación web local con Flask + Socket.IO
-- Assets del navegador servidos en local para depender menos de CDNs
+- Assets del navegador servidos en local para depender menos de CDNs bloqueados
 - Filtros y selección aleatoria en la portada web
 - API simple en `/api/games` para listar el catálogo
 - Deploy automático de un escaparate estático con GitHub Pages
